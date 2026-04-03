@@ -1438,4 +1438,12 @@ socket.on('feedback:new', async () => {
   const today = new Date().toISOString().slice(0, 10);
   if (el.assignmentDateInput) el.assignmentDateInput.value = today;
   setSelectedScheduleDates([today]);
+  // Ensure teacher code field matches initial role selection
+  const isStudent = el.role.value === 'student';
+  el.teacherCodeLabel.hidden = !isStudent;
+  if (isStudent) {
+    el.teacherCode.setAttribute('required', '');
+  } else {
+    el.teacherCode.removeAttribute('required');
+  }
 })();
