@@ -24,6 +24,9 @@ const el = {
   password: document.getElementById('password'),
   role: document.getElementById('role'),
   currentUser: document.getElementById('current-user'),
+  teacherCodeLabel: document.getElementById('teacher-code-label'),
+  teacherCode: document.getElementById('teacher-code'),
+  teacherCodeDisplay: document.getElementById('teacher-code-display'),
   teacherPanel: document.getElementById('teacher-panel'),
   studentPanel: document.getElementById('student-panel'),
   assignmentForm: document.getElementById('assignment-form'),
@@ -140,7 +143,13 @@ async function api(path, options = {}) {
 }
 
 async function loadUsers() {
-  state.users = await api('/api/users');
+  if (state.currentUser && state.currentUser.role === 'teacher') {
+    state.users = await api(`/api/users?teacherId=${state.currentUser.id}`);
+  } else if (state.currentUser && state.currentUser.role === 'student' && state.currentUser.teacher_id) {
+    state.users = await api(`/api/users?teacherId=${state.currentUser.teacher_id}`);
+  } else {
+    state.users = await api('/api/users');
+  }
 }
 
 function partnerRole() {
@@ -155,12 +164,20 @@ function renderSession() {
   const user = state.currentUser;
   if (!user) {
     el.currentUser.textContent = 'Not signed in.';
+    el.teacherCodeDisplay.hidden = true;
     return;
   }
 
   el.currentUser.textContent = `Signed in as ${user.name} (${user.role})`;
   el.teacherPanel.hidden = user.role !== 'teacher';
   el.studentPanel.hidden = user.role !== 'student';
+
+  if (user.role === 'teacher' && user.teacher_code) {
+    el.teacherCodeDisplay.hidden = false;
+    el.teacherCodeDisplay.innerHTML = `<div>Your teacher code:</div><div class="teacher-code-value">${escapeHtml(user.teacher_code)}</div><div class="muted">Share this code with your students so they can join.</div>`;
+  } else {
+    el.teacherCodeDisplay.hidden = true;
+  }
 
   if (user.role !== 'student') {
     stopMetronome();
@@ -1200,22 +1217,37 @@ async function loadChat() {
   el.chatBox.scrollTop = el.chatBox.scrollHeight;
 }
 
+el.role.addEventListener('change', () => {
+  const isStudent = el.role.value === 'student';
+  el.teacherCodeLabel.hidden = !isStudent;
+  if (isStudent) {
+    el.teacherCode.setAttribute('required', '');
+  } else {
+    el.teacherCode.removeAttribute('required');
+  }
+});
+
 el.authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = el.name.value.trim();
   const password = el.password.value;
   const role = el.role.value;
+  const teacherCode = el.teacherCode.value.trim();
   if (!name || !password) return;
 
   try {
+    const body = { name, role, password };
+    if (role === 'student') body.teacherCode = teacherCode;
+
     const userData = await api('/api/users', {
       method: 'POST',
-      body: JSON.stringify({ name, role, password })
+      body: JSON.stringify(body)
     });
 
     state.authToken = userData.token;
     state.currentUser = userData;
     el.password.value = '';
+    el.teacherCode.value = '';
 
     socket.emit('user:online', state.currentUser.id);
 

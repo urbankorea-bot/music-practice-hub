@@ -17,6 +17,13 @@
         <h2>Sign In</h2>
         <form id="auth-form">
           <label>
+            Role
+            <select id="role" required>
+              <option value="teacher">Teacher</option>
+              <option value="student">Student</option>
+            </select>
+          </label>
+          <label>
             Name
             <input id="name" type="text" required />
           </label>
@@ -24,16 +31,14 @@
             Password
             <input id="password" type="password" minlength="4" required />
           </label>
-          <label>
-            Role
-            <select id="role" required>
-              <option value="teacher">Teacher</option>
-              <option value="student">Student</option>
-            </select>
+          <label id="teacher-code-label" hidden>
+            Teacher Code
+            <input id="teacher-code" type="text" placeholder="Enter code from your teacher" />
           </label>
           <button type="submit">Enter</button>
         </form>
         <div id="current-user" class="muted"></div>
+        <div id="teacher-code-display" class="teacher-code-display" hidden></div>
       </section>
 
       <section class="panel" id="teacher-panel" hidden>

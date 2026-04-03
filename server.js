@@ -12,7 +12,6 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-const GOOGLE_CLIENT_ID = '774986148139-hjq7s17f2ncerkdlv9ggoima894cqmdd.apps.googleusercontent.com';
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'music_hub.db');
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -42,6 +41,12 @@ db.exec(`
 `);
 tryAlter("ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT ''");
 tryAlter("ALTER TABLE users ADD COLUMN google_id TEXT");
+tryAlter("ALTER TABLE users ADD COLUMN teacher_code TEXT");
+tryAlter("ALTER TABLE users ADD COLUMN teacher_id INTEGER REFERENCES users(id)");
+
+function generateTeacherCode() {
+  return crypto.randomBytes(3).toString('hex').toUpperCase();
+}
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS assignments (
@@ -258,7 +263,10 @@ function getScheduleDatesForAssignment(assignment) {
 }
 
 function sanitizeUser(user) {
-  return { id: user.id, name: user.name, role: user.role, created_at: user.created_at };
+  const out = { id: user.id, name: user.name, role: user.role, created_at: user.created_at };
+  if (user.role === 'teacher') out.teacher_code = user.teacher_code;
+  if (user.role === 'student') out.teacher_id = user.teacher_id;
+  return out;
 }
 
 function ensureDateChecksForAssignment(assignment) {
@@ -271,9 +279,21 @@ function ensureDateChecksForAssignment(assignment) {
 
 // --- API Routes ---
 
-app.get('/api/users', (_req, res) => {
+app.get('/api/users', (req, res) => {
   try {
-    const users = db.prepare('SELECT id, name, role, created_at FROM users ORDER BY role, name').all();
+    const { teacherId } = req.query;
+    let users;
+    if (teacherId) {
+      // Return the teacher + students linked to this teacher
+      users = db.prepare(`
+        SELECT id, name, role, created_at, teacher_id, teacher_code
+        FROM users
+        WHERE (id = ? AND role = 'teacher') OR (teacher_id = ? AND role = 'student')
+        ORDER BY role, name
+      `).all(teacherId, teacherId);
+    } else {
+      users = db.prepare('SELECT id, name, role, created_at, teacher_id, teacher_code FROM users ORDER BY role, name').all();
+    }
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -281,7 +301,7 @@ app.get('/api/users', (_req, res) => {
 });
 
 app.post('/api/users', async (req, res) => {
-  const { name, role, password } = req.body;
+  const { name, role, password, teacherCode } = req.body;
   if (!name || !role || !password) {
     return res.status(400).json({ error: 'Name, role and password are required' });
   }
@@ -290,16 +310,32 @@ app.post('/api/users', async (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 4 characters' });
   }
 
+  // Students must provide a valid teacher code
+  let linkedTeacherId = null;
+  if (role === 'student') {
+    if (!teacherCode) {
+      return res.status(400).json({ error: 'Teacher code is required for students' });
+    }
+    const teacher = db.prepare('SELECT id FROM users WHERE teacher_code = ? AND role = ?').get(String(teacherCode).trim().toUpperCase(), 'teacher');
+    if (!teacher) {
+      return res.status(400).json({ error: 'Invalid teacher code. Ask your teacher for their code.' });
+    }
+    linkedTeacherId = teacher.id;
+  }
+
   try {
     const existing = db.prepare('SELECT * FROM users WHERE name = ? AND role = ?').get(name.trim(), role);
     if (existing) {
       if (!existing.password) {
         const hash = await bcrypt.hash(String(password), 10);
         db.prepare('UPDATE users SET password = ? WHERE id = ?').run(hash, existing.id);
-        const updatedUser = db.prepare('SELECT id, name, role, created_at FROM users WHERE id = ?').get(existing.id);
+        if (role === 'student' && linkedTeacherId) {
+          db.prepare('UPDATE users SET teacher_id = ? WHERE id = ?').run(linkedTeacherId, existing.id);
+        }
+        const updatedUser = db.prepare('SELECT * FROM users WHERE id = ?').get(existing.id);
         const token = generateToken();
         authTokens.set(token, updatedUser.id);
-        return res.json({ ...updatedUser, token });
+        return res.json({ ...sanitizeUser(updatedUser), token });
       }
       let passwordMatch = false;
       if (existing.password.startsWith('$2')) {
@@ -314,56 +350,32 @@ app.post('/api/users', async (req, res) => {
       if (!passwordMatch) {
         return res.status(401).json({ error: 'Incorrect password' });
       }
+      // Update teacher link if student provides a new code
+      if (role === 'student' && linkedTeacherId) {
+        db.prepare('UPDATE users SET teacher_id = ? WHERE id = ?').run(linkedTeacherId, existing.id);
+        existing.teacher_id = linkedTeacherId;
+      }
       const token = generateToken();
       authTokens.set(token, existing.id);
       return res.json({ ...sanitizeUser(existing), token });
     }
 
+    // New user
     const hashedPassword = await bcrypt.hash(String(password), 10);
-    const result = db.prepare('INSERT INTO users (name, role, password) VALUES (?, ?, ?)').run(name.trim(), role, hashedPassword);
-    const user = db.prepare('SELECT id, name, role, created_at FROM users WHERE id = ?').get(result.lastInsertRowid);
-    const token = generateToken();
-    authTokens.set(token, user.id);
-    res.status(201).json({ ...user, token });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post('/api/auth/google', async (req, res) => {
-  const { credential, role } = req.body;
-  if (!credential || !role) return res.status(400).json({ error: 'credential and role are required' });
-  if (!['teacher', 'student'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
-
-  try {
-    // Verify the Google ID token using Google's tokeninfo endpoint
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
-    if (!response.ok) return res.status(401).json({ error: 'Invalid Google token' });
-
-    const payload = await response.json();
-    if (payload.aud !== GOOGLE_CLIENT_ID) return res.status(401).json({ error: 'Token not issued for this app' });
-
-    const googleId = payload.sub;
-    const name = payload.name || payload.email.split('@')[0];
-
-    // Check if user already exists with this Google ID and role
-    let user = db.prepare('SELECT * FROM users WHERE google_id = ? AND role = ?').get(googleId, role);
-
-    if (!user) {
-      // Check if there's a user with the same name and role (link accounts)
-      const existingByName = db.prepare('SELECT * FROM users WHERE name = ? AND role = ?').get(name, role);
-      if (existingByName) {
-        db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, existingByName.id);
-        user = db.prepare('SELECT * FROM users WHERE id = ?').get(existingByName.id);
-      } else {
-        const result = db.prepare('INSERT INTO users (name, role, password, google_id) VALUES (?, ?, ?, ?)').run(name, role, '', googleId);
-        user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
-      }
+    if (role === 'teacher') {
+      const code = generateTeacherCode();
+      const result = db.prepare('INSERT INTO users (name, role, password, teacher_code) VALUES (?, ?, ?, ?)').run(name.trim(), role, hashedPassword, code);
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = generateToken();
+      authTokens.set(token, user.id);
+      return res.status(201).json({ ...sanitizeUser(user), token });
+    } else {
+      const result = db.prepare('INSERT INTO users (name, role, password, teacher_id) VALUES (?, ?, ?, ?)').run(name.trim(), role, hashedPassword, linkedTeacherId);
+      const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+      const token = generateToken();
+      authTokens.set(token, user.id);
+      return res.status(201).json({ ...sanitizeUser(user), token });
     }
-
-    const token = generateToken();
-    authTokens.set(token, user.id);
-    res.json({ ...sanitizeUser(user), token });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
