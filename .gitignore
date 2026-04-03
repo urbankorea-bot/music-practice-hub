@@ -1,0 +1,5 @@
+node_modules/
+music_hub.db
+uploads/
+.env
+.DS_Store

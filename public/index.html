@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Music Practice Hub</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Music Practice Hub</h1>
+      <p>Track assignments, recordings, and feedback between teachers and students.</p>
+    </header>
+
+    <main class="layout">
+      <section class="panel auth-panel">
+        <h2>Sign In</h2>
+        <form id="auth-form">
+          <label>
+            Name
+            <input id="name" type="text" required />
+          </label>
+          <label>
+            Password
+            <input id="password" type="password" minlength="4" required />
+          </label>
+          <label>
+            Role
+            <select id="role" required>
+              <option value="teacher">Teacher</option>
+              <option value="student">Student</option>
+            </select>
+          </label>
+          <button type="submit">Enter</button>
+        </form>
+        <div id="current-user" class="muted"></div>
+      </section>
+
+      <section class="panel" id="teacher-panel" hidden>
+        <h2>Teacher Dashboard</h2>
+        <form id="assignment-form" class="stack">
+          <h3>Create Assignment</h3>
+          <label>
+            Student
+            <select id="assignment-student" required></select>
+          </label>
+          <label>
+            Title
+            <input id="assignment-title" type="text" required />
+          </label>
+          <label>
+            Description
+            <textarea id="assignment-description"></textarea>
+          </label>
+          <label>
+            YouTube Reference URL
+            <input id="assignment-youtube" type="url" placeholder="https://youtube.com/..." />
+          </label>
+          <fieldset class="day-picker">
+            <legend>Assigned Dates</legend>
+            <div class="date-select-row">
+              <label>
+                Select Date
+                <input id="assignment-date-input" type="date" />
+              </label>
+              <button id="assignment-add-date" type="button">Add Date</button>
+            </div>
+            <div id="assignment-selected-dates" class="selected-date-list"></div>
+          </fieldset>
+          <label>
+            Practice Goal
+            <select id="assignment-practice-mode">
+              <option value="minutes" selected>Practice Duration (minutes)</option>
+              <option value="times">Practice Count (times)</option>
+            </select>
+          </label>
+          <label>
+            Target
+            <select id="assignment-practice-target">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="30">30</option>
+            </select>
+          </label>
+          <button type="submit">Assign</button>
+        </form>
+        <div class="stack archive-section">
+          <h3>Archives</h3>
+          <div id="archive-list" class="stack"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="student-panel" hidden>
+        <h2>Student Practice Tools</h2>
+        <div class="stack">
+          <article class="tool-card stack">
+            <h3>Metronome</h3>
+            <label>
+              BPM: <span id="metronome-bpm-value">80</span>
+              <input id="metronome-bpm" type="range" min="40" max="220" value="80" />
+            </label>
+            <label>
+              Beats Per Bar
+              <select id="metronome-beats">
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4" selected>4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+              </select>
+            </label>
+            <div class="tool-actions">
+              <button id="metronome-start" type="button">Start</button>
+              <button id="metronome-stop" type="button" disabled>Stop</button>
+            </div>
+            <div id="metronome-status" class="muted">Stopped</div>
+          </article>
+
+          <article class="tool-card stack tuner-card">
+            <h3>Instrument Tuner</h3>
+            <label>
+              Instrument
+              <select id="tuner-instrument">
+                <optgroup label="Reference">
+                  <option value="chromatic" selected>Concert Pitch (Chromatic)</option>
+                </optgroup>
+                <optgroup label="Strings">
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="double-bass">Double Bass</option>
+                  <option value="guitar">Guitar</option>
+                  <option value="bass-guitar">Bass Guitar</option>
+                  <option value="ukulele">Ukulele</option>
+                  <option value="banjo">Banjo</option>
+                </optgroup>
+                <optgroup label="Flutes">
+                  <option value="flute">Flute</option>
+                  <option value="piccolo">Piccolo</option>
+                </optgroup>
+                <optgroup label="Double Reeds">
+                  <option value="oboe">Oboe</option>
+                  <option value="english-horn">English Horn</option>
+                  <option value="bassoon">Bassoon</option>
+                </optgroup>
+                <optgroup label="Clarinets">
+                  <option value="bb-clarinet">Bb Clarinet</option>
+                  <option value="eb-clarinet">Eb Clarinet</option>
+                  <option value="bass-clarinet">Bass Clarinet</option>
+                </optgroup>
+                <optgroup label="Saxophones">
+                  <option value="soprano-sax">Soprano Saxophone</option>
+                  <option value="alto-sax">Alto Saxophone</option>
+                  <option value="tenor-sax">Tenor Saxophone</option>
+                  <option value="bari-sax">Baritone Saxophone</option>
+                </optgroup>
+                <optgroup label="Brass">
+                  <option value="trumpet">Bb Trumpet</option>
+                  <option value="french-horn">French Horn</option>
+                  <option value="trombone">Trombone</option>
+                  <option value="euphonium">Euphonium</option>
+                  <option value="tuba">Tuba</option>
+                </optgroup>
+                <optgroup label="Voice">
+                  <option value="voice">Voice</option>
+                </optgroup>
+              </select>
+            </label>
+            <div class="tool-actions">
+              <button id="tuner-start" type="button">Start Listening</button>
+              <button id="tuner-stop" type="button" disabled>Stop</button>
+            </div>
+            <div id="tuner-status" class="muted">Tap Start Listening and play a note</div>
+
+            <div class="tuner-gauge-wrap">
+              <canvas id="tuner-canvas" width="300" height="180"></canvas>
+              <svg class="tuner-gauge-svg" viewBox="0 0 200 110">
+                <path class="tuner-arc" d="M 15 100 A 85 85 0 0 1 185 100" fill="none" stroke-width="3" stroke-linecap="round" />
+                <line class="tuner-tick" x1="100" y1="18" x2="100" y2="28" />
+                <line class="tuner-tick" x1="28" y1="73" x2="36" y2="79" />
+                <line class="tuner-tick" x1="172" y1="73" x2="164" y2="79" />
+                <circle class="tuner-pivot" cx="100" cy="100" r="8" />
+                <line id="tuner-needle" class="tuner-needle-line" x1="100" y1="100" x2="100" y2="22" stroke-width="3" stroke-linecap="round" />
+                <circle id="tuner-dot-left" class="tuner-dot" cx="36" cy="84" r="4" />
+                <circle id="tuner-dot-center" class="tuner-dot" cx="100" cy="14" r="4" />
+                <circle id="tuner-dot-right" class="tuner-dot" cx="164" cy="84" r="4" />
+              </svg>
+              <div class="tuner-gauge-labels">
+                <span class="tuner-flat-label">&#9837;</span>
+                <span class="tuner-sharp-label">&#9839;</span>
+              </div>
+            </div>
+
+            <div class="tuner-note-display">
+              <span id="tuner-note-prev" class="tuner-note-neighbor">-</span>
+              <span id="tuner-note" class="tuner-note-main">-</span>
+              <span id="tuner-note-next" class="tuner-note-neighbor">-</span>
+            </div>
+            <div class="tuner-freq-display">
+              <span id="tuner-frequency">- Hz</span>
+              <span id="tuner-detune" class="tuner-cents">-</span>
+            </div>
+            <div id="tuner-target" class="muted tuner-target-info">-</div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>Assignments</h2>
+        <div id="assignment-list" class="stack"></div>
+      </section>
+
+      <section class="panel">
+        <h2>Teacher-Student Chat</h2>
+        <div class="stack">
+          <label>
+            Chat With
+            <select id="chat-partner"></select>
+          </label>
+          <div id="chat-box"></div>
+          <form id="chat-form" class="chat-form">
+            <input id="chat-input" type="text" placeholder="Type a message..." required />
+            <button type="submit">Send</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

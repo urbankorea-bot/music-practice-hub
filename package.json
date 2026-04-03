@@ -1,0 +1,16 @@
+{
+  "name": "music-practice-hub",
+  "version": "1.0.0",
+  "description": "Music student-teacher assignment tracker with chat and recordings",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1",
+    "sqlite3": "^5.1.7"
+  }
+}
