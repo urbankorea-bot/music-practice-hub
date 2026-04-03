@@ -145,6 +145,10 @@ label {
   font-size: 0.9rem;
 }
 
+label[hidden] {
+  display: none;
+}
+
 input,
 textarea,
 select,
