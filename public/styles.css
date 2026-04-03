@@ -22,7 +22,7 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--ink);
-  font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+  font-family: "DM Sans", "Trebuchet MS", "Gill Sans", sans-serif;
   background-color: var(--parchment);
   background-image:
     radial-gradient(circle at 10% 2%, rgba(147, 168, 201, 0.28) 0%, rgba(147, 168, 201, 0) 36%),
@@ -33,6 +33,196 @@ body {
       rgba(62, 88, 111, 0.05) 0 2px,
       transparent 2px 36px
     );
+}
+
+/* ---- Login Screen ---- */
+
+.login-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  background: linear-gradient(135deg, #0f1923 0%, #1a2d3d 30%, #142832 60%, #0d1b26 100%);
+  overflow: hidden;
+}
+
+.login-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.note {
+  position: absolute;
+  font-size: 2.5rem;
+  color: rgba(69, 185, 174, 0.12);
+  animation: float-note 12s ease-in-out infinite;
+}
+
+.note-1 { top: 10%; left: 8%; animation-delay: 0s; font-size: 3rem; }
+.note-2 { top: 20%; right: 12%; animation-delay: 2s; font-size: 2rem; }
+.note-3 { bottom: 25%; left: 15%; animation-delay: 4s; font-size: 2.2rem; }
+.note-4 { top: 60%; right: 20%; animation-delay: 6s; font-size: 2.8rem; }
+.note-5 { bottom: 10%; right: 8%; animation-delay: 8s; font-size: 1.8rem; }
+
+@keyframes float-note {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.12; }
+  25% { transform: translateY(-20px) rotate(8deg); opacity: 0.2; }
+  50% { transform: translateY(-10px) rotate(-5deg); opacity: 0.15; }
+  75% { transform: translateY(-25px) rotate(3deg); opacity: 0.22; }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  margin: 1rem;
+  padding: 2.5rem 2rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 25px 60px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  text-align: center;
+  animation: card-enter 0.6s ease;
+}
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(30px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.login-logo {
+  font-size: 3.5rem;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+  color: #45b9ae;
+  text-shadow: 0 0 30px rgba(69, 185, 174, 0.4);
+}
+
+.login-title {
+  font-family: "Playfair Display", "Palatino Linotype", serif;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #eef8fb;
+  margin: 0 0 0.2rem;
+  letter-spacing: 0.02em;
+}
+
+.login-subtitle {
+  font-size: 0.92rem;
+  color: rgba(238, 248, 251, 0.5);
+  margin: 0 0 1.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.login-form {
+  display: grid;
+  gap: 0.9rem;
+  text-align: left;
+}
+
+.login-form label {
+  color: rgba(238, 248, 251, 0.7);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.login-form input,
+.login-form select {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #eef8fb;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+.login-form input::placeholder {
+  color: rgba(238, 248, 251, 0.3);
+}
+
+.login-form input:focus,
+.login-form select:focus {
+  outline: none;
+  border-color: rgba(69, 185, 174, 0.5);
+  box-shadow: 0 0 0 3px rgba(69, 185, 174, 0.15);
+}
+
+.login-form select option {
+  background: #1a2d3d;
+  color: #eef8fb;
+}
+
+.login-btn {
+  margin-top: 0.4rem;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #45b9ae, #2a8a80);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.03em;
+}
+
+.login-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(69, 185, 174, 0.35);
+}
+
+.login-error {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(199, 90, 61, 0.2);
+  border: 1px solid rgba(199, 90, 61, 0.3);
+  color: #f0a090;
+  font-size: 0.85rem;
+}
+
+.login-screen[hidden] {
+  display: none;
+}
+
+/* ---- Sign Out Button ---- */
+
+.sign-out-btn {
+  width: auto;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  color: #eef8fb;
+}
+
+.sign-out-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.topbar-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- App Screen ---- */
+
+#app-screen[hidden] {
+  display: none;
 }
 
 .topbar {

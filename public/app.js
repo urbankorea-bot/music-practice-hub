@@ -23,10 +23,16 @@ const el = {
   name: document.getElementById('name'),
   password: document.getElementById('password'),
   role: document.getElementById('role'),
+  loginScreen: document.getElementById('login-screen'),
+  appScreen: document.getElementById('app-screen'),
+  loginError: document.getElementById('login-error'),
+  signOutBtn: document.getElementById('sign-out-btn'),
   currentUser: document.getElementById('current-user'),
   teacherCodeLabel: document.getElementById('teacher-code-label'),
   teacherCode: document.getElementById('teacher-code'),
   teacherCodeDisplay: document.getElementById('teacher-code-display'),
+  assignmentsPanel: document.getElementById('assignments-panel'),
+  chatPanel: document.getElementById('chat-panel'),
   teacherPanel: document.getElementById('teacher-panel'),
   studentPanel: document.getElementById('student-panel'),
   assignmentForm: document.getElementById('assignment-form'),
@@ -163,14 +169,21 @@ function usersByRole(role) {
 function renderSession() {
   const user = state.currentUser;
   if (!user) {
-    el.currentUser.textContent = 'Not signed in.';
+    el.loginScreen.hidden = false;
+    el.appScreen.hidden = true;
+    el.currentUser.textContent = '';
     el.teacherCodeDisplay.hidden = true;
     return;
   }
 
-  el.currentUser.textContent = `Signed in as ${user.name} (${user.role})`;
+  el.loginScreen.hidden = true;
+  el.appScreen.hidden = false;
+
+  el.currentUser.textContent = `${user.name} (${user.role})`;
   el.teacherPanel.hidden = user.role !== 'teacher';
   el.studentPanel.hidden = user.role !== 'student';
+  el.assignmentsPanel.hidden = false;
+  el.chatPanel.hidden = false;
 
   if (user.role === 'teacher' && user.teacher_code) {
     el.teacherCodeDisplay.hidden = false;
@@ -1229,6 +1242,7 @@ el.role.addEventListener('change', () => {
 
 el.authForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+  el.loginError.hidden = true;
   const name = el.name.value.trim();
   const password = el.password.value;
   const role = el.role.value;
@@ -1257,8 +1271,20 @@ el.authForm.addEventListener('submit', async (e) => {
     await loadAssignments();
     await loadChat();
   } catch (error) {
-    alert(error.message || 'Sign-in failed');
+    el.loginError.textContent = error.message || 'Sign-in failed';
+    el.loginError.hidden = false;
   }
+});
+
+el.signOutBtn.addEventListener('click', () => {
+  state.currentUser = null;
+  state.authToken = null;
+  state.users = [];
+  state.assignments = [];
+  state.archivedAssignments = [];
+  stopMetronome();
+  stopTuner();
+  renderSession();
 });
 
 el.assignmentForm.addEventListener('submit', async (e) => {
