@@ -3,14 +3,17 @@
   "version": "1.0.0",
   "description": "Music student-teacher assignment tracker with chat and recordings",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^11.10.0",
     "express": "^4.19.2",
     "multer": "^1.4.5-lts.1",
-    "socket.io": "^4.8.1",
-    "sqlite3": "^5.1.7"
+    "socket.io": "^4.8.1"
   }
 }
