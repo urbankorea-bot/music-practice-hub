@@ -1400,63 +1400,10 @@ socket.on('feedback:new', async () => {
   alert('New feedback posted by your teacher.');
 });
 
-async function handleGoogleSignIn(response) {
-  const role = el.role.value;
-  try {
-    const userData = await api('/api/auth/google', {
-      method: 'POST',
-      body: JSON.stringify({ credential: response.credential, role })
-    });
-    state.authToken = userData.token;
-    state.currentUser = userData;
-    socket.emit('user:online', state.currentUser.id);
-    await loadUsers();
-    renderSession();
-    renderTeacherStudentOptions();
-    await loadAssignments();
-    await loadChat();
-  } catch (error) {
-    alert(error.message || 'Google sign-in failed');
-  }
-}
-
-function initGoogleSignIn() {
-  const fallbackBtn = document.getElementById('google-fallback-btn');
-  let attempts = 0;
-
-  function tryInit() {
-    attempts++;
-    if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.initialize({
-        client_id: '774986148139-hjq7s17f2ncerkdlv9ggoima894cqmdd.apps.googleusercontent.com',
-        callback: handleGoogleSignIn
-      });
-      google.accounts.id.renderButton(
-        document.getElementById('google-signin-btn'),
-        { theme: 'outline', size: 'large', width: 280, text: 'signin_with' }
-      );
-      if (fallbackBtn) fallbackBtn.hidden = true;
-    } else if (attempts < 15) {
-      setTimeout(tryInit, 300);
-    } else {
-      // Google script blocked — show fallback button
-      if (fallbackBtn) {
-        fallbackBtn.hidden = false;
-        fallbackBtn.addEventListener('click', () => {
-          alert('Google Sign-In is blocked by your browser or an extension. Try using an incognito/private window, or disable your ad blocker for this site.');
-        });
-      }
-    }
-  }
-
-  tryInit();
-}
-
 (async function init() {
   await loadUsers();
   refreshPracticeTargetOptions();
   const today = new Date().toISOString().slice(0, 10);
   if (el.assignmentDateInput) el.assignmentDateInput.value = today;
   setSelectedScheduleDates([today]);
-  initGoogleSignIn();
 })();
