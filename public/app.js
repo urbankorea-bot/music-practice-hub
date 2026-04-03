@@ -1421,18 +1421,35 @@ async function handleGoogleSignIn(response) {
 }
 
 function initGoogleSignIn() {
-  if (typeof google === 'undefined' || !google.accounts) {
-    setTimeout(initGoogleSignIn, 200);
-    return;
+  const fallbackBtn = document.getElementById('google-fallback-btn');
+  let attempts = 0;
+
+  function tryInit() {
+    attempts++;
+    if (typeof google !== 'undefined' && google.accounts) {
+      google.accounts.id.initialize({
+        client_id: '774986148139-hjq7s17f2ncerkdlv9ggoima894cqmdd.apps.googleusercontent.com',
+        callback: handleGoogleSignIn
+      });
+      google.accounts.id.renderButton(
+        document.getElementById('google-signin-btn'),
+        { theme: 'outline', size: 'large', width: 280, text: 'signin_with' }
+      );
+      if (fallbackBtn) fallbackBtn.hidden = true;
+    } else if (attempts < 15) {
+      setTimeout(tryInit, 300);
+    } else {
+      // Google script blocked — show fallback button
+      if (fallbackBtn) {
+        fallbackBtn.hidden = false;
+        fallbackBtn.addEventListener('click', () => {
+          alert('Google Sign-In is blocked by your browser or an extension. Try using an incognito/private window, or disable your ad blocker for this site.');
+        });
+      }
+    }
   }
-  google.accounts.id.initialize({
-    client_id: '774986148139-hjq7s17f2ncerkdlv9ggoima894cqmdd.apps.googleusercontent.com',
-    callback: handleGoogleSignIn
-  });
-  google.accounts.id.renderButton(
-    document.getElementById('google-signin-btn'),
-    { theme: 'outline', size: 'large', width: 280, text: 'signin_with' }
-  );
+
+  tryInit();
 }
 
 (async function init() {
