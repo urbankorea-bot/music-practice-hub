@@ -1400,10 +1400,46 @@ socket.on('feedback:new', async () => {
   alert('New feedback posted by your teacher.');
 });
 
+async function handleGoogleSignIn(response) {
+  const role = el.role.value;
+  try {
+    const userData = await api('/api/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential: response.credential, role })
+    });
+    state.authToken = userData.token;
+    state.currentUser = userData;
+    socket.emit('user:online', state.currentUser.id);
+    await loadUsers();
+    renderSession();
+    renderTeacherStudentOptions();
+    await loadAssignments();
+    await loadChat();
+  } catch (error) {
+    alert(error.message || 'Google sign-in failed');
+  }
+}
+
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) {
+    setTimeout(initGoogleSignIn, 200);
+    return;
+  }
+  google.accounts.id.initialize({
+    client_id: '774986148139-hjq7s17f2ncerkdlv9ggoima894cqmdd.apps.googleusercontent.com',
+    callback: handleGoogleSignIn
+  });
+  google.accounts.id.renderButton(
+    document.getElementById('google-signin-btn'),
+    { theme: 'outline', size: 'large', width: 280, text: 'signin_with' }
+  );
+}
+
 (async function init() {
   await loadUsers();
   refreshPracticeTargetOptions();
   const today = new Date().toISOString().slice(0, 10);
   if (el.assignmentDateInput) el.assignmentDateInput.value = today;
   setSelectedScheduleDates([today]);
+  initGoogleSignIn();
 })();

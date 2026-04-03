@@ -12,6 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+const GOOGLE_CLIENT_ID = '774986148139-hjq7s17f2ncerkdlv9ggoima894cqmdd.apps.googleusercontent.com';
 const PORT = process.env.PORT || 3000;
 const DB_PATH = path.join(__dirname, 'music_hub.db');
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -40,6 +41,7 @@ db.exec(`
   )
 `);
 tryAlter("ALTER TABLE users ADD COLUMN password TEXT NOT NULL DEFAULT ''");
+tryAlter("ALTER TABLE users ADD COLUMN google_id TEXT");
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS assignments (
@@ -323,6 +325,45 @@ app.post('/api/users', async (req, res) => {
     const token = generateToken();
     authTokens.set(token, user.id);
     res.status(201).json({ ...user, token });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/auth/google', async (req, res) => {
+  const { credential, role } = req.body;
+  if (!credential || !role) return res.status(400).json({ error: 'credential and role are required' });
+  if (!['teacher', 'student'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+
+  try {
+    // Verify the Google ID token using Google's tokeninfo endpoint
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`);
+    if (!response.ok) return res.status(401).json({ error: 'Invalid Google token' });
+
+    const payload = await response.json();
+    if (payload.aud !== GOOGLE_CLIENT_ID) return res.status(401).json({ error: 'Token not issued for this app' });
+
+    const googleId = payload.sub;
+    const name = payload.name || payload.email.split('@')[0];
+
+    // Check if user already exists with this Google ID and role
+    let user = db.prepare('SELECT * FROM users WHERE google_id = ? AND role = ?').get(googleId, role);
+
+    if (!user) {
+      // Check if there's a user with the same name and role (link accounts)
+      const existingByName = db.prepare('SELECT * FROM users WHERE name = ? AND role = ?').get(name, role);
+      if (existingByName) {
+        db.prepare('UPDATE users SET google_id = ? WHERE id = ?').run(googleId, existingByName.id);
+        user = db.prepare('SELECT * FROM users WHERE id = ?').get(existingByName.id);
+      } else {
+        const result = db.prepare('INSERT INTO users (name, role, password, google_id) VALUES (?, ?, ?, ?)').run(name, role, '', googleId);
+        user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
+      }
+    }
+
+    const token = generateToken();
+    authTokens.set(token, user.id);
+    res.json({ ...sanitizeUser(user), token });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

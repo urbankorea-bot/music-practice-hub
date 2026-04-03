@@ -452,6 +452,29 @@ a {
   gap: 0.4rem;
 }
 
+.auth-google-section {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.4rem 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
 .tuner-card {
   --tuner-color: #5d769e;
   --tuner-glow: rgba(93, 118, 158, 0.3);
