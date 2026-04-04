@@ -663,158 +663,47 @@ a {
   color: var(--velvet-deep);
 }
 
-.tuner-card {
-  --tuner-color: #5d769e;
-  --tuner-glow: rgba(93, 118, 158, 0.3);
-  transition: --tuner-color 0.3s ease;
+.tuner-readout {
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.95rem;
 }
 
-.tuner-card.in-tune {
-  --tuner-color: #d4a017;
-  --tuner-glow: rgba(212, 160, 23, 0.35);
-}
-
-.tuner-card.flat {
-  --tuner-color: #2d8fc7;
-  --tuner-glow: rgba(45, 143, 199, 0.3);
-}
-
-.tuner-card.sharp {
-  --tuner-color: #c75a3d;
-  --tuner-glow: rgba(199, 90, 61, 0.3);
-}
-
-.tuner-gauge-wrap {
+.tuner-meter {
   position: relative;
-  width: 100%;
-  max-width: 300px;
-  margin: 0.5rem auto 0;
-  aspect-ratio: 300 / 180;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid #bfd2dc;
+  background: linear-gradient(90deg, #d5f1eb, #f5fbfd 50%, #d9e5f7);
 }
 
-#tuner-canvas {
+.tuner-center {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+  left: 50%;
+  top: -3px;
+  bottom: -3px;
+  width: 2px;
+  background: var(--walnut);
+  transform: translateX(-50%);
 }
 
-.tuner-gauge-svg {
-  position: relative;
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.tuner-arc {
-  stroke: rgba(93, 118, 158, 0.25);
-}
-
-.tuner-tick {
-  stroke: rgba(93, 118, 158, 0.35);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.tuner-pivot {
-  fill: var(--tuner-color);
-  transition: fill 0.3s ease;
-}
-
-.tuner-needle-line {
-  stroke: var(--tuner-color);
-  transition: stroke 0.3s ease, transform 0.08s ease-out;
-  transform-origin: 100px 100px;
-}
-
-.tuner-dot {
-  fill: rgba(93, 118, 158, 0.2);
-  transition: fill 0.2s ease, filter 0.2s ease;
-}
-
-.tuner-dot.active {
-  fill: #fff;
-  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.6));
-}
-
-.tuner-gauge-labels {
+#tuner-needle {
   position: absolute;
-  bottom: 8%;
-  left: 0;
-  right: 0;
+  top: -4px;
+  left: 50%;
+  width: 6px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--teal-note);
+  transform: translateX(-50%);
+  transition: left 0.06s linear;
+}
+
+.tuner-labels {
   display: flex;
   justify-content: space-between;
-  padding: 0 8%;
-  font-size: 1.2rem;
-  color: var(--muted);
-  pointer-events: none;
-}
-
-.tuner-note-display {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 0.2rem;
-}
-
-.tuner-note-main {
-  font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
-  font-size: 2.6rem;
-  font-weight: 700;
-  color: var(--ink);
-  line-height: 1;
-  transition: color 0.3s ease;
-}
-
-.tuner-card.in-tune .tuner-note-main {
-  color: #b8860b;
-}
-
-.tuner-note-neighbor {
-  font-size: 1rem;
-  color: var(--muted);
-  opacity: 0.5;
-}
-
-.tuner-freq-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  font-size: 0.92rem;
-  color: var(--muted);
-}
-
-.tuner-cents {
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
   font-size: 0.8rem;
-  font-weight: 600;
-  background: #e2ebf4;
-  color: #38506a;
-}
-
-.tuner-card.in-tune .tuner-cents {
-  background: #f5ecd0;
-  color: #8b7000;
-}
-
-.tuner-card.flat .tuner-cents {
-  background: #d6edf8;
-  color: #1a6a9a;
-}
-
-.tuner-card.sharp .tuner-cents {
-  background: #f8ddd6;
-  color: #9a3a1a;
-}
-
-.tuner-target-info {
-  text-align: center;
-  font-size: 0.84rem;
+  color: var(--muted);
 }
 
 .recorder-actions {

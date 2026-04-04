@@ -145,91 +145,41 @@
               <div id="metronome-status" class="muted">Stopped</div>
             </article>
 
-            <article class="tool-card stack tuner-card">
-              <h3>Instrument Tuner</h3>
+            <article class="tool-card stack">
+              <h3>Tuner</h3>
               <label>
                 Instrument
                 <select id="tuner-instrument">
-                  <optgroup label="Reference">
-                    <option value="chromatic" selected>Concert Pitch (Chromatic)</option>
-                  </optgroup>
-                  <optgroup label="Strings">
-                    <option value="violin">Violin</option>
-                    <option value="viola">Viola</option>
-                    <option value="cello">Cello</option>
-                    <option value="double-bass">Double Bass</option>
-                    <option value="guitar">Guitar</option>
-                    <option value="bass-guitar">Bass Guitar</option>
-                    <option value="ukulele">Ukulele</option>
-                    <option value="banjo">Banjo</option>
-                  </optgroup>
-                  <optgroup label="Flutes">
-                    <option value="flute">Flute</option>
-                    <option value="piccolo">Piccolo</option>
-                  </optgroup>
-                  <optgroup label="Double Reeds">
-                    <option value="oboe">Oboe</option>
-                    <option value="english-horn">English Horn</option>
-                    <option value="bassoon">Bassoon</option>
-                  </optgroup>
-                  <optgroup label="Clarinets">
-                    <option value="bb-clarinet">Bb Clarinet</option>
-                    <option value="eb-clarinet">Eb Clarinet</option>
-                    <option value="bass-clarinet">Bass Clarinet</option>
-                  </optgroup>
-                  <optgroup label="Saxophones">
-                    <option value="soprano-sax">Soprano Saxophone</option>
-                    <option value="alto-sax">Alto Saxophone</option>
-                    <option value="tenor-sax">Tenor Saxophone</option>
-                    <option value="bari-sax">Baritone Saxophone</option>
-                  </optgroup>
-                  <optgroup label="Brass">
-                    <option value="trumpet">Bb Trumpet</option>
-                    <option value="french-horn">French Horn</option>
-                    <option value="trombone">Trombone</option>
-                    <option value="euphonium">Euphonium</option>
-                    <option value="tuba">Tuba</option>
-                  </optgroup>
-                  <optgroup label="Voice">
-                    <option value="voice">Voice</option>
-                  </optgroup>
+                  <option value="chromatic" selected>Chromatic (Any Instrument)</option>
+                  <option value="violin">Violin</option>
+                  <option value="viola">Viola</option>
+                  <option value="cello">Cello</option>
+                  <option value="guitar">Guitar</option>
+                  <option value="bass-guitar">Bass Guitar</option>
+                  <option value="ukulele">Ukulele</option>
+                  <option value="voice">Voice</option>
                 </select>
               </label>
               <div class="tool-actions">
-                <button id="tuner-start" type="button">Start Listening</button>
-                <button id="tuner-stop" type="button" disabled>Stop</button>
+                <button id="tuner-start" type="button">Start Tuner</button>
+                <button id="tuner-stop" type="button" disabled>Stop Tuner</button>
               </div>
-              <div id="tuner-status" class="muted">Tap Start Listening and play a note</div>
-
-              <div class="tuner-gauge-wrap">
-                <canvas id="tuner-canvas" width="300" height="180"></canvas>
-                <svg class="tuner-gauge-svg" viewBox="0 0 200 110">
-                  <path class="tuner-arc" d="M 15 100 A 85 85 0 0 1 185 100" fill="none" stroke-width="3" stroke-linecap="round" />
-                  <line class="tuner-tick" x1="100" y1="18" x2="100" y2="28" />
-                  <line class="tuner-tick" x1="28" y1="73" x2="36" y2="79" />
-                  <line class="tuner-tick" x1="172" y1="73" x2="164" y2="79" />
-                  <circle class="tuner-pivot" cx="100" cy="100" r="8" />
-                  <line id="tuner-needle" class="tuner-needle-line" x1="100" y1="100" x2="100" y2="22" stroke-width="3" stroke-linecap="round" />
-                  <circle id="tuner-dot-left" class="tuner-dot" cx="36" cy="84" r="4" />
-                  <circle id="tuner-dot-center" class="tuner-dot" cx="100" cy="14" r="4" />
-                  <circle id="tuner-dot-right" class="tuner-dot" cx="164" cy="84" r="4" />
-                </svg>
-                <div class="tuner-gauge-labels">
-                  <span class="tuner-flat-label">&#9837;</span>
-                  <span class="tuner-sharp-label">&#9839;</span>
-                </div>
+              <div id="tuner-status" class="muted">Stopped</div>
+              <div class="tuner-readout">
+                <div><strong>Note:</strong> <span id="tuner-note">-</span></div>
+                <div><strong>Frequency:</strong> <span id="tuner-frequency">-</span></div>
+                <div><strong>Detune:</strong> <span id="tuner-detune">-</span></div>
+                <div><strong>Target:</strong> <span id="tuner-target">-</span></div>
               </div>
-
-              <div class="tuner-note-display">
-                <span id="tuner-note-prev" class="tuner-note-neighbor">-</span>
-                <span id="tuner-note" class="tuner-note-main">-</span>
-                <span id="tuner-note-next" class="tuner-note-neighbor">-</span>
+              <div class="tuner-meter">
+                <div class="tuner-center"></div>
+                <div id="tuner-needle"></div>
               </div>
-              <div class="tuner-freq-display">
-                <span id="tuner-frequency">- Hz</span>
-                <span id="tuner-detune" class="tuner-cents">-</span>
+              <div class="tuner-labels">
+                <span>Flat</span>
+                <span>In Tune</span>
+                <span>Sharp</span>
               </div>
-              <div id="tuner-target" class="muted tuner-target-info">-</div>
             </article>
           </div>
         </section>

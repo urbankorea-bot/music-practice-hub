@@ -62,17 +62,10 @@ const el = {
   tunerStatus: document.getElementById('tuner-status'),
   tunerInstrument: document.getElementById('tuner-instrument'),
   tunerNote: document.getElementById('tuner-note'),
-  tunerNotePrev: document.getElementById('tuner-note-prev'),
-  tunerNoteNext: document.getElementById('tuner-note-next'),
   tunerFrequency: document.getElementById('tuner-frequency'),
   tunerDetune: document.getElementById('tuner-detune'),
   tunerTarget: document.getElementById('tuner-target'),
-  tunerNeedle: document.getElementById('tuner-needle'),
-  tunerCanvas: document.getElementById('tuner-canvas'),
-  tunerCard: document.querySelector('.tuner-card'),
-  tunerDotLeft: document.getElementById('tuner-dot-left'),
-  tunerDotCenter: document.getElementById('tuner-dot-center'),
-  tunerDotRight: document.getElementById('tuner-dot-right')
+  tunerNeedle: document.getElementById('tuner-needle')
 };
 
 const NOTE_OFFSETS = {
@@ -124,6 +117,13 @@ const INSTRUMENT_TARGETS = {
   'tuba': ['Bb0', 'C1', 'D1', 'Eb1', 'F1', 'G1', 'A1', 'Bb1'],
   'voice': ['C3', 'E3', 'G3', 'C4', 'E4', 'G4', 'C5']
 };
+
+function toLocalTime(dateStr) {
+  if (!dateStr) return '-';
+  const s = String(dateStr);
+  const d = new Date(s.includes('T') || s.includes('Z') ? s : s + 'Z');
+  return Number.isNaN(d.getTime()) ? s : d.toLocaleString();
+}
 
 function escapeHtml(str) {
   const div = document.createElement('div');
@@ -600,123 +600,35 @@ function getSelectedInstrumentLabel() {
   return selectedOption ? selectedOption.textContent : 'Chromatic (Any Instrument)';
 }
 
-const NOTE_NAMES_ORDERED = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-
-function getNeighborNotes(noteName) {
-  const idx = NOTE_NAMES_ORDERED.indexOf(noteName);
-  if (idx === -1) return { prev: '-', next: '-' };
-  const prev = NOTE_NAMES_ORDERED[(idx - 1 + 12) % 12];
-  const next = NOTE_NAMES_ORDERED[(idx + 1) % 12];
-  return { prev, next };
-}
-
-function drawTunerParticles(confidence, angleDeg) {
-  const canvas = el.tunerCanvas;
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width;
-  const h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  if (confidence <= 0) return;
-
-  const cx = w / 2;
-  const cy = h * (100 / 110);
-  const innerR = w * (85 / 200) * 0.55;
-  const outerR = w * (85 / 200) * 0.95;
-  const numRays = 36;
-  const angleRad = (angleDeg - 90) * (Math.PI / 180);
-
-  for (let i = 0; i < numRays; i++) {
-    const frac = i / numRays;
-    const rayAngle = Math.PI + frac * Math.PI;
-    const distFromNeedle = Math.abs(rayAngle - (Math.PI + angleRad + Math.PI / 2));
-    const nearness = Math.max(0, 1 - distFromNeedle / 1.2);
-    const rayLen = innerR + (outerR - innerR) * (0.7 + Math.random() * 0.3);
-    const alpha = confidence * nearness * 0.4;
-
-    if (alpha < 0.02) continue;
-
-    const x1 = cx + Math.cos(rayAngle) * innerR;
-    const y1 = cy + Math.sin(rayAngle) * innerR;
-    const x2 = cx + Math.cos(rayAngle) * rayLen;
-    const y2 = cy + Math.sin(rayAngle) * rayLen;
-
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.strokeStyle = `rgba(212, 160, 23, ${alpha})`;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  }
-}
-
 function updateTunerUI(frequency) {
-  const isActive = frequency > 0 && Number.isFinite(frequency);
-
-  if (!isActive) {
+  if (frequency <= 0 || !Number.isFinite(frequency)) {
     el.tunerNote.textContent = '-';
-    el.tunerNotePrev.textContent = '-';
-    el.tunerNoteNext.textContent = '-';
-    el.tunerFrequency.textContent = '- Hz';
+    el.tunerFrequency.textContent = '-';
     el.tunerDetune.textContent = '-';
     el.tunerTarget.textContent = '-';
-    el.tunerNeedle.setAttribute('transform', 'rotate(0, 100, 100)');
-    el.tunerCard.classList.remove('in-tune', 'flat', 'sharp');
-    el.tunerDotLeft.classList.remove('active');
-    el.tunerDotCenter.classList.remove('active');
-    el.tunerDotRight.classList.remove('active');
-    drawTunerParticles(0, 0);
+    el.tunerNeedle.style.left = '50%';
     return;
   }
 
   const { noteName, cents } = getTunerNoteData(frequency);
-  const neighbors = getNeighborNotes(noteName);
   const selectedInstrument = el.tunerInstrument.value || 'chromatic';
   const closestTarget = getClosestInstrumentTarget(frequency, selectedInstrument);
+  const clamped = Math.max(-50, Math.min(50, cents));
+  const position = ((clamped + 50) / 100) * 100;
 
-  // Needle angle: -90 (far left/flat) to +90 (far right/sharp), 0 = center/in-tune
-  const clampedCents = Math.max(-50, Math.min(50, cents));
-  const needleAngle = (clampedCents / 50) * 80;
-  el.tunerNeedle.setAttribute('transform', `rotate(${needleAngle}, 100, 100)`);
-
-  // Note display
   el.tunerNote.textContent = noteName;
-  el.tunerNotePrev.textContent = neighbors.prev;
-  el.tunerNoteNext.textContent = neighbors.next;
   el.tunerFrequency.textContent = `${frequency.toFixed(1)} Hz`;
-
   if (cents === 0) {
     el.tunerDetune.textContent = 'In tune';
   } else {
     el.tunerDetune.textContent = `${cents > 0 ? '+' : ''}${cents} cents`;
   }
-
   if (closestTarget) {
-    el.tunerTarget.textContent = `Target: ${closestTarget.note} (${closestTarget.centsOff > 0 ? '+' : ''}${closestTarget.centsOff} cents)`;
+    el.tunerTarget.textContent = `${closestTarget.note} (${closestTarget.centsOff > 0 ? '+' : ''}${closestTarget.centsOff} cents)`;
   } else {
-    el.tunerTarget.textContent = 'Chromatic — any note';
+    el.tunerTarget.textContent = 'Any note';
   }
-
-  // Color state
-  const absCents = Math.abs(cents);
-  el.tunerCard.classList.remove('in-tune', 'flat', 'sharp');
-  if (absCents <= 5) {
-    el.tunerCard.classList.add('in-tune');
-  } else if (cents < 0) {
-    el.tunerCard.classList.add('flat');
-  } else {
-    el.tunerCard.classList.add('sharp');
-  }
-
-  // Indicator dots
-  el.tunerDotLeft.classList.toggle('active', cents < -5);
-  el.tunerDotCenter.classList.toggle('active', absCents <= 5);
-  el.tunerDotRight.classList.toggle('active', cents > 5);
-
-  // Particle rays
-  const confidence = Math.max(0, 1 - absCents / 40);
-  drawTunerParticles(confidence, needleAngle);
+  el.tunerNeedle.style.left = `${position}%`;
 }
 
 function monitorPitch() {
@@ -795,7 +707,7 @@ function assignmentCard(assignment) {
     .map(
       (r) =>
         `<li>
-          <div>${escapeHtml(r.original_name || 'Recording')} <span class="muted">(${new Date(r.created_at).toLocaleString()})</span></div>
+          <div>${escapeHtml(r.original_name || 'Recording')} <span class="muted">(${toLocalTime(r.created_at)})</span></div>
           <audio controls src="${escapeHtml(r.file_path)}"></audio>
         </li>`
     )
@@ -806,7 +718,7 @@ function assignmentCard(assignment) {
       (f) =>
         `<li>
           <strong>${escapeHtml(f.teacher_name)}:</strong> ${escapeHtml(f.comment)}
-          <span class="muted">(${new Date(f.created_at).toLocaleString()})</span>
+          <span class="muted">(${toLocalTime(f.created_at)})</span>
         </li>`
     )
     .join('');
@@ -925,7 +837,7 @@ function archiveCard(assignment) {
       <div class="muted">Student: ${escapeHtml(assignment.student_name)}</div>
       <div class="muted">Schedule: ${scheduleLabel}</div>
       <div class="muted">Progress: ${completedDayCount}/${totalDayCount} day(s)</div>
-      <div class="muted">Archived: ${assignment.archived_at ? new Date(assignment.archived_at).toLocaleString() : '-'}</div>
+      <div class="muted">Archived: ${toLocalTime(assignment.archived_at)}</div>
       <div class="archive-actions">
         <button type="button" data-restore-assignment="${assignment.id}">Revive Assignment</button>
         <button type="button" class="danger-btn" data-delete-archived-assignment="${assignment.id}">Delete Permanently</button>
@@ -1222,9 +1134,7 @@ async function loadChat() {
   el.chatBox.innerHTML = messages
     .map(
       (m) =>
-        `<div class="chat-row"><strong>${escapeHtml(m.sender_name)}:</strong> ${escapeHtml(m.message)} <span class="muted">${new Date(
-          m.created_at
-        ).toLocaleTimeString()}</span></div>`
+        `<div class="chat-row"><strong>${escapeHtml(m.sender_name)}:</strong> ${escapeHtml(m.message)} <span class="muted">${toLocalTime(m.created_at)}</span></div>`
     )
     .join('');
   el.chatBox.scrollTop = el.chatBox.scrollHeight;
