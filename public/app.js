@@ -1150,11 +1150,6 @@ async function loadChat() {
 el.role.addEventListener('change', () => {
   const isStudent = el.role.value === 'student';
   el.teacherCodeLabel.hidden = !isStudent;
-  if (isStudent) {
-    el.teacherCode.setAttribute('required', '');
-  } else {
-    el.teacherCode.removeAttribute('required');
-  }
 });
 
 el.authForm.addEventListener('submit', async (e) => {
@@ -1385,13 +1380,7 @@ socket.on('feedback:new', async () => {
   setSelectedScheduleDates([today]);
 
   // Ensure teacher code field matches initial role selection
-  const isStudent = el.role.value === 'student';
-  el.teacherCodeLabel.hidden = !isStudent;
-  if (isStudent) {
-    el.teacherCode.setAttribute('required', '');
-  } else {
-    el.teacherCode.removeAttribute('required');
-  }
+  el.teacherCodeLabel.hidden = el.role.value !== 'student';
 
   // Restore saved session
   try {
