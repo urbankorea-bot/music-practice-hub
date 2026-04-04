@@ -310,12 +310,9 @@ app.post('/api/users', async (req, res) => {
     return res.status(400).json({ error: 'Password must be at least 4 characters' });
   }
 
-  // Students must provide a valid teacher code
+  // Resolve teacher code if provided
   let linkedTeacherId = null;
-  if (role === 'student') {
-    if (!teacherCode) {
-      return res.status(400).json({ error: 'Teacher code is required for students' });
-    }
+  if (role === 'student' && teacherCode) {
     const teacher = db.prepare('SELECT id FROM users WHERE teacher_code = ? AND role = ?').get(String(teacherCode).trim().toUpperCase(), 'teacher');
     if (!teacher) {
       return res.status(400).json({ error: 'Invalid teacher code. Ask your teacher for their code.' });
@@ -325,6 +322,10 @@ app.post('/api/users', async (req, res) => {
 
   try {
     const existing = db.prepare('SELECT * FROM users WHERE name = ? AND role = ?').get(name.trim(), role);
+    // New students must provide a teacher code
+    if (!existing && role === 'student' && !linkedTeacherId) {
+      return res.status(400).json({ error: 'Teacher code is required for new students' });
+    }
     if (existing) {
       if (!existing.password) {
         const hash = await bcrypt.hash(String(password), 10);

@@ -141,6 +141,13 @@ async function api(path, options = {}) {
     cache: 'no-store',
     ...options
   });
+  if (res.status === 401 && state.authToken) {
+    state.currentUser = null;
+    state.authToken = null;
+    localStorage.removeItem('mph_session');
+    renderSession();
+    throw new Error('Session expired. Please sign in again.');
+  }
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(err.error || 'Request failed');
@@ -1173,6 +1180,8 @@ el.authForm.addEventListener('submit', async (e) => {
     el.password.value = '';
     el.teacherCode.value = '';
 
+    localStorage.setItem('mph_session', JSON.stringify({ user: userData, token: userData.token }));
+
     socket.emit('user:online', state.currentUser.id);
 
     await loadUsers();
@@ -1192,6 +1201,7 @@ el.signOutBtn.addEventListener('click', () => {
   state.users = [];
   state.assignments = [];
   state.archivedAssignments = [];
+  localStorage.removeItem('mph_session');
   stopMetronome();
   stopTuner();
   renderSession();
@@ -1369,11 +1379,11 @@ socket.on('feedback:new', async () => {
 });
 
 (async function init() {
-  await loadUsers();
   refreshPracticeTargetOptions();
   const today = new Date().toISOString().slice(0, 10);
   if (el.assignmentDateInput) el.assignmentDateInput.value = today;
   setSelectedScheduleDates([today]);
+
   // Ensure teacher code field matches initial role selection
   const isStudent = el.role.value === 'student';
   el.teacherCodeLabel.hidden = !isStudent;
@@ -1382,4 +1392,25 @@ socket.on('feedback:new', async () => {
   } else {
     el.teacherCode.removeAttribute('required');
   }
+
+  // Restore saved session
+  try {
+    const saved = JSON.parse(localStorage.getItem('mph_session') || 'null');
+    if (saved && saved.user && saved.token) {
+      state.authToken = saved.token;
+      state.currentUser = saved.user;
+      socket.emit('user:online', state.currentUser.id);
+      await loadUsers();
+      renderSession();
+      renderTeacherStudentOptions();
+      await loadAssignments();
+      await loadChat();
+      return;
+    }
+  } catch (_e) {
+    localStorage.removeItem('mph_session');
+  }
+
+  await loadUsers();
+  renderSession();
 })();
