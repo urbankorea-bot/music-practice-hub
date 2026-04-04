@@ -30,6 +30,8 @@ const el = {
   currentUser: document.getElementById('current-user'),
   teacherCodeLabel: document.getElementById('teacher-code-label'),
   teacherCode: document.getElementById('teacher-code'),
+  setTeacherCodeLabel: document.getElementById('set-teacher-code-label'),
+  setTeacherCode: document.getElementById('set-teacher-code'),
   teacherCodeDisplay: document.getElementById('teacher-code-display'),
   assignmentsPanel: document.getElementById('assignments-panel'),
   chatPanel: document.getElementById('chat-panel'),
@@ -1148,8 +1150,9 @@ async function loadChat() {
 }
 
 el.role.addEventListener('change', () => {
-  const isStudent = el.role.value === 'student';
-  el.teacherCodeLabel.hidden = !isStudent;
+  const role = el.role.value;
+  el.teacherCodeLabel.hidden = role !== 'student';
+  el.setTeacherCodeLabel.hidden = role !== 'teacher';
 });
 
 el.authForm.addEventListener('submit', async (e) => {
@@ -1164,6 +1167,7 @@ el.authForm.addEventListener('submit', async (e) => {
   try {
     const body = { name, role, password };
     if (role === 'student') body.teacherCode = teacherCode;
+    if (role === 'teacher') body.setTeacherCode = el.setTeacherCode.value.trim();
 
     const userData = await api('/api/users', {
       method: 'POST',
@@ -1174,6 +1178,7 @@ el.authForm.addEventListener('submit', async (e) => {
     state.currentUser = userData;
     el.password.value = '';
     el.teacherCode.value = '';
+    el.setTeacherCode.value = '';
 
     localStorage.setItem('mph_session', JSON.stringify({ user: userData, token: userData.token }));
 
@@ -1379,8 +1384,9 @@ socket.on('feedback:new', async () => {
   if (el.assignmentDateInput) el.assignmentDateInput.value = today;
   setSelectedScheduleDates([today]);
 
-  // Ensure teacher code field matches initial role selection
+  // Ensure code fields match initial role selection
   el.teacherCodeLabel.hidden = el.role.value !== 'student';
+  el.setTeacherCodeLabel.hidden = el.role.value !== 'teacher';
 
   // Restore saved session
   try {

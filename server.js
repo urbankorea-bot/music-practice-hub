@@ -301,7 +301,7 @@ app.get('/api/users', (req, res) => {
 });
 
 app.post('/api/users', async (req, res) => {
-  const { name, role, password, teacherCode } = req.body;
+  const { name, role, password, teacherCode, setTeacherCode } = req.body;
   if (!name || !role || !password) {
     return res.status(400).json({ error: 'Name, role and password are required' });
   }
@@ -356,6 +356,17 @@ app.post('/api/users', async (req, res) => {
         db.prepare('UPDATE users SET teacher_id = ? WHERE id = ?').run(linkedTeacherId, existing.id);
         existing.teacher_id = linkedTeacherId;
       }
+      // Update teacher code if teacher provides one
+      if (role === 'teacher' && setTeacherCode) {
+        const code = String(setTeacherCode).trim().toUpperCase();
+        if (code.length >= 3) {
+          const codeExists = db.prepare('SELECT id FROM users WHERE teacher_code = ? AND role = ? AND id != ?').get(code, 'teacher', existing.id);
+          if (!codeExists) {
+            db.prepare('UPDATE users SET teacher_code = ? WHERE id = ?').run(code, existing.id);
+            existing.teacher_code = code;
+          }
+        }
+      }
       const token = generateToken();
       authTokens.set(token, existing.id);
       return res.json({ ...sanitizeUser(existing), token });
@@ -364,7 +375,10 @@ app.post('/api/users', async (req, res) => {
     // New user
     const hashedPassword = await bcrypt.hash(String(password), 10);
     if (role === 'teacher') {
-      const code = generateTeacherCode();
+      const code = setTeacherCode ? String(setTeacherCode).trim().toUpperCase() : generateTeacherCode();
+      if (code.length < 3) return res.status(400).json({ error: 'Teacher code must be at least 3 characters' });
+      const codeExists = db.prepare('SELECT id FROM users WHERE teacher_code = ? AND role = ?').get(code, 'teacher');
+      if (codeExists) return res.status(400).json({ error: 'That teacher code is already taken. Choose a different one.' });
       const result = db.prepare('INSERT INTO users (name, role, password, teacher_code) VALUES (?, ?, ?, ?)').run(name.trim(), role, hashedPassword, code);
       const user = db.prepare('SELECT * FROM users WHERE id = ?').get(result.lastInsertRowid);
       const token = generateToken();
